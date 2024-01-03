@@ -8,6 +8,7 @@ import { setEditCourse, setStep } from '../../../../../slices/courseSlice';
 import toast from 'react-hot-toast';
 import { createSection, updateSection } from '../../../../../services/operations/courseDetailsAPI';
 import NestedView from './NestedView';
+import { setCourse } from '../../../../../slices/courseSlice';
 
 const CourseBuilderForm = () => {
 
@@ -20,7 +21,7 @@ const CourseBuilderForm = () => {
 
   const [editSectionName, setEditSectionName] = useState(false);
   const dispatch = useDispatch();
-  const {course,setCourse} = useSelector((state)=>state.course)
+  const {course} = useSelector((state)=>state.course)
   const [loading,setLoading]= useState(false)
   const {token} = useSelector((state)=>state.auth)
 
@@ -69,9 +70,9 @@ const CourseBuilderForm = () => {
 
     //update values
     if(result){
-      dispatch(setCourse(result))
-      setEditSectionName(null)
-      setValue("sectionName","")
+      dispatch(setCourse(result));
+      setEditSectionName(null);
+      setValue("sectionName","");
     }
 
 
@@ -116,7 +117,7 @@ const CourseBuilderForm = () => {
             type="Submit"
             text={editSectionName ? "Edit Section Name" : "Create Section"}
             outline = {true}
-            customClasses={'text-white'}
+            customClasses={"text-yellow-50"}
             >
               <GrAddCircle className='text-yellow-50'/>
 
