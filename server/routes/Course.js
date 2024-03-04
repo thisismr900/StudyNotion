@@ -9,6 +9,10 @@ const {
   createCourse,
   getAllCourses,
   getCourseDetails,
+  getFullCourseDetails,
+  editCourse,
+  getInstructorCourses,
+  deleteCourse
 } = require("../controllers/Course")
 
 
@@ -51,6 +55,7 @@ const { auth, isInstructor, isStudent, isAdmin } = require("../middlewares/auth"
 router.post("/createCourse", auth, isInstructor, createCourse)
 //Add a Section to a Course
 router.post("/addSection", auth, isInstructor, createSection)
+
 // Update a Section
 router.post("/updateSection", auth, isInstructor, updateSection)
 // Delete a Section
@@ -61,13 +66,25 @@ router.post("/updateSubSection", auth, isInstructor, updateSubSection)
 router.post("/deleteSubSection", auth, isInstructor, deleteSubSection)
 // Add a Sub Section to a Section
 router.post("/addSubSection", auth, isInstructor, createSubSection)
+
 // Get all Registered Courses
 router.get("/getAllCourses", getAllCourses)
 // Get Details for a Specific Courses
 router.post("/getCourseDetails", getCourseDetails)
+// Get FULL Details for a Specific Courses
+router.post("/getFullCourseDetails", auth, getFullCourseDetails)
+
+//edit course route
+router.post("/editCourse",auth,isInstructor, editCourse)
+//get instructor course route
+router.get("/getInstructorCourses",auth,isInstructor, getInstructorCourses)
+//delete course route
+router.delete("/deleteCourse",auth,isInstructor, deleteCourse)
+
+
 
 // ********************************************************************************************************
-//                                      Category routes (Only by Admin)
+//                                      Category routes 
 // ********************************************************************************************************
 // Category can Only be Created by Admin
 // TODO: Put IsAdmin Middleware here

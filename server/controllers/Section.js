@@ -1,4 +1,5 @@
 const Section = require("../models/Section");
+const SubSection = require("../models/SubSection");
 const Course = require("../models/Course");
 const { default: mongoose } = require("mongoose");
 // CREATE a new section
@@ -55,21 +56,34 @@ exports.createSection = async (req, res) => {
 // UPDATE a section
 exports.updateSection = async (req, res) => {
 	try {
-		const { sectionName, sectionId } = req.body;
+		const { sectionName, sectionId, courseId } = req.body;
 		const section = await Section.findByIdAndUpdate(
 			sectionId,
 			{ sectionName },
 			{ new: true }
 		);
+
+		const course = await Course.findById(courseId)
+		.populate({
+			path:"courseContent",
+			populate:{
+				path:"subSection"
+			},
+		})
+		.exec();
+
+
 		res.status(200).json({
 			success: true,
 			message: section,
+			data: course
 		});
 	} catch (error) {
 		console.error("Error updating section:", error);
 		res.status(500).json({
 			success: false,
 			message: "Internal server error",
+
 		});
 	}
 };
@@ -84,23 +98,37 @@ exports.deleteSection = async (req, res) => {
 		courseId = new mongoose.Types.ObjectId(courseId);
 
 		console.log("sectionID to be deleted: ",sectionId);
-		console.log("sectionID belong to this courseID: ",courseId);
+		console.log("sectionID belong to courseID: ",courseId);
 		// Update deleted section in Course schema ko bhi update karo
-		const updatedCourse = await Course.findByIdAndUpdate(
+		await Course.findByIdAndUpdate(
 			{_id:courseId},
-			{
-				$pull: {
-					courseContent : sectionId
-				}
-			},
-			{new : true}
+			{ $pull: { courseContent : sectionId }},
 			)
+		const sectionToBeDeleted = await Section.findById(sectionId);
+		if(!sectionToBeDeleted){
+			return res.status(400).json({
+				success: false,
+				message: "Section To Be deleted not found",
+			})
+		}
+		console.log("sectionToBeDeleted: ",sectionToBeDeleted);
+		//delete the subsections under the sectionToBeDeleted
+		await SubSection.deleteMany({ _id: { $in: sectionToBeDeleted.subSection } });
+		//Now delete this section
 		await Section.findByIdAndDelete({_id:sectionId});
-			
-		console.log(updatedCourse);
+		
+		const updatedCourse = await Course.findById(courseId).populate({
+			path:"courseContent",
+			populate: {
+				path: "subSection",
+			}
+		}).exec();
+		
+		console.log("Updated Course: ",updatedCourse);
 		res.status(200).json({
 			success: true,
 			message: "Section deleted",
+			data: updatedCourse,
 		});
 	} catch (error) {
 		console.error("Error deleting section:", error);

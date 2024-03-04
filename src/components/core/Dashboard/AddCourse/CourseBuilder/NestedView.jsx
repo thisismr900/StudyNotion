@@ -31,20 +31,22 @@ const NestedView = ({handleChangeEditSectionName}) => {
                 courseId: course._id,
                 token
             })
-
+            console.log("UpdatedCourse After deletion:",updatedCourse);
             if(updatedCourse){
                 dispatch(setCourse(updatedCourse))
             }
             setConfirmationModal(null);
     }
     const handleDeleteSubSection = async (subSectionId, sectionId) => {
-        const updatedCourse = await deleteSubSection({
+        const updatedSection = await deleteSubSection({
             subSectionId, 
             sectionId, 
             token
         })
-        if(updatedCourse){
-            //what can be done extra??
+        if(updatedSection){
+            const updatedCourseContent = course.courseContent.map((section)=>
+                section._id === sectionId ? updatedSection : section);
+            const updatedCourse = {...course, courseContent:updatedCourseContent};
             dispatch(setCourse(updatedCourse))
         }
         setConfirmationModal(null);
@@ -57,8 +59,9 @@ const NestedView = ({handleChangeEditSectionName}) => {
     <div className='bg-richblack-700 rounded-lg p-6 px-8 text-white'>
     
     {course?.courseContent?.map((section)=>(
+        // Section Dropdown
         <details key={section._id} open>
-
+              {/*  Section Dropdown Content */}
             <summary className='flex items-center justify-between gap-x-3 border-b-2'>
                 <div className='flex items-center gap-x-3'>
                     <RxDropdownMenu className='text-white'/>
@@ -76,9 +79,9 @@ const NestedView = ({handleChangeEditSectionName}) => {
                     onClick={()=>{
                         setConfirmationModal({
                             text1:"Delete this Section",
-                            text2:"All the lectures in this section will be deleted",
-                            btn1:"Delete",
-                            btn2:"Cancel",
+                            text2:"All the lectures in this section will be Deleted",
+                            btn1Text:"Delete",
+                            btn2Text:"Cancel",
                             btn1Handler:()=>handleDeleteSection(section._id),
                             btn2Handler:()=>setConfirmationModal(null),
                         })
@@ -91,10 +94,10 @@ const NestedView = ({handleChangeEditSectionName}) => {
                 </div>
 
             </summary>
-
-            <div>
+{/* Render All Sub Sections Within a Section */}
+            <div className="px-6 pb-4">
                 {
-                    section?.subSection.map((data) => (
+                    section?.subSection?.map((data) => (
                         <div key={data?._id}
                         onClick={()=> setViewSubSection(data)}
                         className='flex items-center justify-between gap-x-3 border-b-2'
@@ -105,6 +108,7 @@ const NestedView = ({handleChangeEditSectionName}) => {
                             </div>
 
                             <div
+                            onClick = {(e)=>e.stopPropagation()}
                             className='flex items-center gap-x-3'
                             >
                                 <button
@@ -116,8 +120,8 @@ const NestedView = ({handleChangeEditSectionName}) => {
                                 onClick={() => setConfirmationModal({
                                     text1:"Delete this Sub-Section",
                                     text2:"Selected lecture will be deleted",
-                                    btn1:"Delete",
-                                    btn2:"Cancel",
+                                    btn1Text:"Delete",
+                                    btn2Text:"Cancel",
                                     btn1Handler:()=>handleDeleteSubSection(data._id,section._id),
                                     btn2Handler:()=>setConfirmationModal(null),
                                 })}

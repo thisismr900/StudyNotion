@@ -4,11 +4,10 @@ import IconBtn from '../../../../common/IconBtn';
 import {GrAddCircle} from 'react-icons/gr'
 import {BiRightArrow} from "react-icons/bi"
 import { useDispatch, useSelector } from 'react-redux';
-import { setEditCourse, setStep } from '../../../../../slices/courseSlice';
+import { setEditCourse, setStep, setCourse} from '../../../../../slices/courseSlice';
 import toast from 'react-hot-toast';
 import { createSection, updateSection } from '../../../../../services/operations/courseDetailsAPI';
 import NestedView from './NestedView';
-import { setCourse } from '../../../../../slices/courseSlice';
 
 const CourseBuilderForm = () => {
 
@@ -19,14 +18,14 @@ const CourseBuilderForm = () => {
     formState:{errors}
   } = useForm();
 
-  const [editSectionName, setEditSectionName] = useState(false);
+  const [editSectionName, setEditSectionName] = useState(null);
   const dispatch = useDispatch();
   const {course} = useSelector((state)=>state.course)
   const [loading,setLoading]= useState(false)
   const {token} = useSelector((state)=>state.auth)
 
   const cancelEdit = () => {
-    setEditSectionName(false);
+    setEditSectionName(null);
     setValue("sectionName","");
   }
 
@@ -57,8 +56,10 @@ const CourseBuilderForm = () => {
       result = await updateSection({
         sectionName: data.sectionName,
         sectionId: editSectionName,
+
         courseId: course._id,
       },token)
+      // console.log("edit", result)
     }
     else{
       //create section 
@@ -70,6 +71,7 @@ const CourseBuilderForm = () => {
 
     //update values
     if(result){
+      // console.log("section result", result)
       dispatch(setCourse(result));
       setEditSectionName(null);
       setValue("sectionName","");
@@ -93,26 +95,36 @@ const CourseBuilderForm = () => {
 
 
   return (
-    <div className='text-white'>
-        <p>Course Builder</p>
+    <div className="space-y-8 rounded-md border-[1px] border-richblack-700 bg-richblack-800 p-6">
+        <p className="text-2xl font-semibold text-richblack-5">Course Builder</p>
 
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div>
-            <label htmlFor='sectionName'>Section Name<sup className='text-pink-200'>*</sup></label>
+          <div className="flex flex-col space-y-2">
+            
+            <label  
+              className="text-sm text-richblack-5" 
+              htmlFor='sectionName'>
+                Section Name
+                <sup className='text-pink-200'>*</sup>
+            </label>
+
             <input
             id='sectionName'
+            disabled={loading}
             placeholder='Add Section Name'
             {...register("sectionName",{required:true})}
-            className='w-full'
+            className={'w-full text-black form-style'}
             />
             {
               errors.sectionName && (
-                <span className='text-yellow-5'>Section Name is Required</span>
+                <span className='ml-2 text-xs tracking-wide text-yellow-5'>
+                  Section Name is Required
+                </span>
               )
             }
           </div>
 
-          <div className='mt-10 flex'>
+          <div className='mt-10 flex items-end gap-x-4'>
             <IconBtn
             type="Submit"
             text={editSectionName ? "Edit Section Name" : "Create Section"}
@@ -141,14 +153,25 @@ const CourseBuilderForm = () => {
           )
         }
 
+        {/* Back & Next button */}
         <div className='flex justify-end gap-x-3'>
           <button onClick={goBack} 
           className='rounded-md cursor-pointer flex items-center'>
             Back
           </button>
-          <IconBtn text={"Next"} onClick={goToNext}>
+          <button onClick={goToNext} 
+          className='rounded-md border border-yellow-50 py-2 px-5 font-semibold text-richblack-900 bg-yellow-50 cursor-pointer flex items-center'>
+            Next
+          </button>
+          {/* <IconBtn 
+          // While loading: disable its functioning
+            disabled={loading} 
+            text={"Next!"}
+            type={"button"} 
+            outline = {false}
+            onClick={goToNext}>
             <BiRightArrow/>
-          </IconBtn>
+          </IconBtn> */}
         </div>
 
         
