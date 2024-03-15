@@ -3,6 +3,9 @@ const Category = require("../models/Category");
 const Section = require("../models/Section")
 const SubSection = require("../models/SubSection")
 const User = require("../models/User");
+const CourseProgress = require("../models/CourseProgress")
+const { convertSecondsToDuration } = require("../utils/secToDuration")
+
 const { uploadImageToCloudinary } = require("../utils/imageUploader");
 // Function to create a new course
 exports.createCourse = async (req, res) => {
@@ -157,41 +160,54 @@ exports.getAllCourses = async (req, res) => {
 //getCourseDetails
 exports.getCourseDetails = async (req, res) => {
     try {
-            //get id
-            const {courseId} = req.body;
-            //find course details
-            const courseDetails = await Course.find(
-                                        {_id:courseId})
-                                        .populate(
-                                            {
-                                                path:"instructor",
-                                                populate:{
-                                                    path:"additionalDetails",
-                                                },
-                                            }
-                                        )
-                                        .populate("category")
-                                        //.populate("ratingAndreviews")
-                                        .populate({
-                                            path:"courseContent",
-                                            populate:{
-                                                path:"subSection",
-                                            },
-                                        })
-                                        .exec();
+        //get id
+        const {courseId} = req.body;
+        //find course details
+    	const courseDetails = await Course.findOne(
+            {_id:courseId})
+            .populate({
+			path:"instructor",
+            populate:{
+    			path:"additionalDetails",
+            }})
+            .populate("category")
+            //.populate("ratingAndreviews")
+            .populate({
+                path:"courseContent",
+            	populate:{
+                    path:"subSection",
+                },
+            })
+            .exec();
+ 			
+			//validation
+			if (!courseDetails) {
+				return res.status(400).json({
+				  success: false,
+				  message: `Could not find course with id: ${courseId}`,
+				})
+			  }
 
-                //validation
-                if(!courseDetails) {
-                    return res.status(400).json({
-                        success:false,
-                        message:`Could not find the course with ${courseId}`,
-                    });
-                }
-                //return response
-                return res.status(200).json({
-                    success:true,
-                    message:"Course Details fetched successfully",
-                    data:courseDetails,
+
+			let totalDurationInSeconds = 0
+			courseDetails.courseContent.forEach((content) => {
+				content.subSection.forEach((subSection) => {
+					const timeDurationInSeconds = parseInt(subSection.timeDuration)
+					totalDurationInSeconds += timeDurationInSeconds
+				})
+			})
+									
+			const totalDuration = convertSecondsToDuration(totalDurationInSeconds)
+									
+               
+            //return response
+            return res.status(200).json({
+                success:true,
+                message:"Course Details fetched successfully",
+                data:{
+					courseDetails,
+					totalDuration,
+				}
                 })
 
     }
@@ -352,7 +368,68 @@ exports.deleteCourse = async (req,res) => {
 
 exports.getFullCourseDetails = async (req,res) => {
 	try{
-		//strat from here!!!
+		const {courseId} = req.body;
+		const userId = req.user._id;
+		const courseDetails = await Course.findOne(
+			{_id:courseId,})
+			.populate({
+				path: "instructor",
+				populate: {
+					path: "additionalDetails",
+				},
+			})
+			.populate("category")
+			.populate("ratingAndReviews")
+			.populate("instructions")
+			.populate({
+				path:"courseContent",
+				populate:{
+					path:"subSection",
+				}
+			})
+			.exec();
+		
+			if (!courseDetails) {
+				return res.status(400).json({
+				  success: false,
+				  message: `Could not find course with id: ${courseId}`,
+				})
+			}
+			
+			// if (courseDetails.status === "Draft") {
+		  	// 	return res.status(403).json({
+		    // 	success: false,
+		    // 	message: `Accessing a draft course is not allowed`,
+		  	// 	});
+			// }
+			
+			let courseProgressCount = await CourseProgress.findOne({
+				courseId: courseId,
+				// userId: userId,
+			})
+
+			console.log("courseProgressCount : ", courseProgressCount)
+			
+			let totalDurationInSeconds = 0
+    		courseDetails.courseContent.forEach((content) => {
+      		content.subSection.forEach((subSection) => {
+        	const timeInSeconds = parseInt(subSection.timeDuration)
+        	totalDurationInSeconds += timeInSeconds
+			})
+		})
+
+			const totalDuration = convertSecondsToDuration(totalDurationInSeconds)
+
+			return res.status(200).json({
+				success: true,
+				data:{
+					courseDetails,
+					totalDuration,
+					completedVideos:courseProgressCount?.completedVideos ?
+						(courseProgressCount?.completedVideos):[], 
+				},
+			})
+			
 	}
 	catch(error){
 		return res.status(500).json({

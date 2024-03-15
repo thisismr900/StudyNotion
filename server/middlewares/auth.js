@@ -5,11 +5,13 @@ const User = require("../models/User");
 //auth
 exports.auth = async (req, res, next) => {
     try{
+
         //extract token
         const token = req.cookies.token 
-                        || req.body.token 
-                        || req.header("Authorization").replace("Bearer ", "");
-
+        || req.body.token 
+        || req.header("Authorization").replace("Bearer ", "");
+        
+        // console.log("In Auth middleware extracting token...", token)
         //if token missing, then return response
         if(!token) {
             return res.status(401).json({
@@ -17,14 +19,16 @@ exports.auth = async (req, res, next) => {
                 message:'TOken is missing',
             });
         }
-
+        // console.log("Verifying token")
         //verify the token
         try{
-            const decode =  jwt.verify(token, process.env.JWT_SECRET);
-            console.log(decode);
-            req.user = decode;
+            const decodedPayload =  jwt.verify(token, process.env.JWT_SECRET);
+            console.log("decodedPayload",decodedPayload);
+            // console.log("req:",req)
+            req.user = decodedPayload;//adding payload in req for further use
+            console.log("req.user:",req?.user)
         }
-        catch(err) {
+        catch(error) {
             //verification - issue
             return res.status(401).json({
                 success:false,
@@ -36,7 +40,7 @@ exports.auth = async (req, res, next) => {
     catch(error) {  
         return res.status(401).json({
             success:false,
-            message:'Something went wrong while validating the token',
+            message:'Something went wrong while validating the token in auth middleware',
         });
     }
 }
@@ -44,12 +48,16 @@ exports.auth = async (req, res, next) => {
 //isStudent
 exports.isStudent = async (req, res, next) => {
  try{
+        // console.log(" at isStudent middleware,req.user :",req.user)
+        // console.log("User role:", req.user.accountType)
+
         if(req.user.accountType !== "Student") {
             return res.status(401).json({
                 success:false,
                 message:'This is a protected route for Students only',
             });
         }
+        // console.log("Student Role is verified")
         next();
  }
  catch(error) {

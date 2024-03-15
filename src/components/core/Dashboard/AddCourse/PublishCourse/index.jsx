@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useDispatch, useSelector } from 'react-redux';
 import IconBtn from '../../../../common/IconBtn';
-import { resetCourseState, setStep } from '../../../../../slices/courseSlice';
+import { resetCourseState, setEditCourse, setStep } from '../../../../../slices/courseSlice';
 import { COURSE_STATUS } from '../../../../../utils/constants';
 import { editCourseDetails } from '../../../../../services/operations/courseDetailsAPI';
+
 
 export const PublishCourse = () => {
   
@@ -13,6 +14,7 @@ export const PublishCourse = () => {
   const {course} = useSelector((state)=>state.course)
   const {token} = useSelector((state)=>state.auth)
   const [loading,setLoading] = useState(false)
+  const navigate = useDispatch();
 
 
   useEffect(()=>{
@@ -26,7 +28,8 @@ export const PublishCourse = () => {
   const goToCourses = () => {
     dispatch(resetCourseState()); // course = null; in courseSlice
     //PENDING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // navigate("/dashboard/my-courses")  
+    navigate("/dashboard/my-courses")  
+    dispatch(setEditCourse(false))
   }
   const handlePublishCourse = async () => {
     if( (course?.status === COURSE_STATUS.PUBLISHED && getValues("public") === true) || 
@@ -86,7 +89,12 @@ export const PublishCourse = () => {
                 Back
               </button>
 
-              <IconBtn disabled={loading} text={"save Changes"}/>
+              <IconBtn 
+                disabled={loading} 
+                text={"save Changes"}
+                // type={"submit"}
+                // onClick={goToCourses}
+                />
               
             </div>
         </form>

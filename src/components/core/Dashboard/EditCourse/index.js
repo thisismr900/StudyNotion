@@ -31,15 +31,17 @@ export default function EditCourse() {
     },[])
     
     if(loading){
-        return(<div>Loading...</div>)
+        return(<div className='text-white'>Loading...</div>)
     }
     return (
     <div className='text-white'>
         <h1>Edit Course</h1>
 
-        <div>
+        <div className="mx-auto max-w-[600px]">
             {
-                course ? (<RenderSteps/>):(<p>Course Not Found</p>)
+                course ? 
+                (<RenderSteps/>):
+                (<p className="mt-14 text-center text-3xl font-semibold text-richblack-100">Course Not Found</p>)
             }
         </div>
     </div>
