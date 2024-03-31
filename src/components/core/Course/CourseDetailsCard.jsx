@@ -69,18 +69,19 @@ const CourseDetailsCard = (
                 ?"Go to Course":
                 "Buy Now"
             }
+            </button>
 
             {
-                (!course?.studentsEnrolled.includes(user?._id)) && (
+                !(course?.studentsEnrolled.includes(user?._id)) && (
                     <button
-                    className='bg-yellow-50 w-fit text-richblack-900'
+                    className=' bg-yellow-50 w-fit text-richblack-900'
                     onClick={handleAddToCart}
+                    
                     >
                         Add to Cart
                     </button>
                 )
             }
-            </button>
         </div>
         
         <div>
