@@ -7,6 +7,10 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { markLectureAsComplete } from '../../../services/operations/courseDetailsAPI';
 import { updateCompletedLectures } from '../../../slices/viewCourseSlice';
 
+import { Player } from 'video-react'
+import '~video-react/dist/video-react.css';
+import {AiFillPlayCircle} from "react-icons/ai"
+
 const VideoDetails = () => {
 
   const {courseId, sectionId, subSectionId} = useParams();
@@ -144,6 +148,9 @@ const VideoDetails = () => {
   const handleLectureCompletion = async() => {
     //once lecture/subsection is done->create entry in db(courseProgress schema)->also update in UI
     setLoading(true);
+
+//PENDING-> course progress
+
     const res = await markLectureAsComplete({courseId:courseId, subSectionId: subSectionId},token);
     //update in state
     if(res){
@@ -153,9 +160,78 @@ const VideoDetails = () => {
     
   }
 
+  const hanleLectureRewatch = () => {
+    if(playerRef?.current){
+      playerRef.current?.seek(0);
+      setVideoEnded(false);
+    }
+  }
+
   return (
-    <div className='text-white'>
-        videodetails
+    <div>
+    {
+      !videoData ? (<div>No Video File Found</div>)
+      : (
+        <Player
+          ref={playerRef}
+          aspectRatio="16:9"
+          playsInline
+          onEnded={()=>setVideoEnded(true)}
+          src={videoData?.videoUrl}
+        >
+          <AiFillPlayCircle/>
+          {
+            videoEnded && (
+              <div>
+                {
+                  !completedLectures.includes(subSectionId) && (
+                    <IconBtn 
+                      disabled={loading}
+                      onClick = {()=>handleLectureCompletion()}
+                      text = {!loading ? "Mark as Completed" : "Loading..."}  
+                    />
+                  )
+                }
+                <IconBtn
+                      disabled={loading}
+                      onClick = {()=>hanleLectureRewatch()}
+                      text = {"Rewatch"}
+                      customClasses  
+                />
+
+                <div>
+                  {!isFirstVideo() && (
+                    <button
+                    disabled={loading}
+                    onClick={goToPrevVideo}
+                    className='blackButton'
+                    >
+                      Prev
+                    </button>
+                  )}
+
+                  {
+                    !isLastVideo() && (
+                      <button
+                      disabled={loading}
+                      onClick={goToNextVideo}
+                      className='blackButton'
+                      >
+                        Next
+                      </button>
+                    )
+                  }
+                </div>
+              </div>
+            )
+          }
+      </Player>
+      )
+    }  
+
+    <h1>{videoData?.title}</h1>
+    <p>{videoData?.description}</p>
+
     </div>
   )
 }
