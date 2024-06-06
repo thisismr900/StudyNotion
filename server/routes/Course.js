@@ -12,7 +12,8 @@ const {
   getFullCourseDetails,
   editCourse,
   getInstructorCourses,
-  deleteCourse
+  deleteCourse,
+  lectureCompletion,
 } = require("../controllers/Course")
 
 

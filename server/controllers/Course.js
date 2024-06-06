@@ -438,3 +438,14 @@ exports.getFullCourseDetails = async (req,res) => {
 		})
 	}
 }
+
+
+// PENDING
+exports.lectureCompletion = async(req,res) => {
+	try{
+
+	}
+	catch(error){
+
+	}
+}
