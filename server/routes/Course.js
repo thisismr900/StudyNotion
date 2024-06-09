@@ -13,9 +13,11 @@ const {
   editCourse,
   getInstructorCourses,
   deleteCourse,
-  lectureCompletion,
 } = require("../controllers/Course")
 
+const {
+  updateCourseProgress
+} = require("../controllers/CourseProgress")
 
 // Categories Controllers Import
 const {
@@ -81,6 +83,9 @@ router.post("/editCourse",auth,isInstructor, editCourse)
 router.get("/getInstructorCourses",auth,isInstructor, getInstructorCourses)
 //delete course route
 router.delete("/deleteCourse",auth,isInstructor, deleteCourse)
+
+//update courseProgress route
+router.post("/updateCourseProgress",auth,isStudent,updateCourseProgress)
 
 
 

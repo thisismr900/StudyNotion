@@ -24,10 +24,11 @@ export default function EnrolledCourses() {
     getEnrolledCourses();
   }, [])
 
+  console.log("enrolledCourses:",enrolledCourses)
   return (
     <>
       <div className="text-3xl text-richblack-50">Enrolled Courses</div>
-      {console.log("enrolledCourses",enrolledCourses)}
+      {/* {console.log("enrolledCourses",enrolledCourses)} */}
       {!enrolledCourses ? (
         <div className="grid min-h-[calc(100vh-3.5rem)] place-items-center">
           <div className="spinner"></div>
@@ -56,8 +57,9 @@ export default function EnrolledCourses() {
               <div
                 className="flex w-[45%] cursor-pointer items-center gap-4 px-5 py-3"
                 onClick={() => {
+                  // {console.log("course.courseContent:",course.courseContent)}
                   navigate(
-                    `/view-course/${course?._id}/section/${course.courseContent?.[0]?._id}/sub-section/${course.courseContent?.[0]?.subSection?.[0]?._id}`
+                    `/view-course/${course?._id}/section/${course.courseContent?.[0]._id}/sub-section/${course.courseContent?.[0]?.subSection?.[0]?._id}`
                   )
                 }}
               >

@@ -19,15 +19,19 @@ exports.createCourse = async (req, res) => {
 			courseDescription,
 			whatYouWillLearn,
 			price,
-			tag,
+			tag:_tag,
 			category,
 			status,
-			instructions,
+			instructions:_instructions,
 		} = req.body;
 
 		 //Get thumbnail image from request files
 		 console.log('getting thumbnail from req.files')
 		const thumbnail = req.files.thumbnailImage;
+
+		//convert tag & instructions from stringified array to array
+		const tag = JSON.parse(_tag)
+		const instructions = JSON.parse(_instructions)
 
 
 		// Check if any of the required fields are missing
@@ -36,9 +40,10 @@ exports.createCourse = async (req, res) => {
 			!courseDescription ||
 			!whatYouWillLearn ||
 			!price ||
-			!tag ||
+			!tag.length ||
 			!thumbnail ||
-			!category
+			!category ||
+			!instructions.length
 		) {
 			return res.status(400).json({
 				success: false,
@@ -74,6 +79,7 @@ exports.createCourse = async (req, res) => {
 			process.env.FOLDER_NAME
 		);
 		console.log(thumbnailImage);
+
 		 //Create a new course with the given details
 		const newCourse = await Course.create({
 			courseName,
@@ -131,18 +137,19 @@ exports.createCourse = async (req, res) => {
 exports.getAllCourses = async (req, res) => {
 	try {
 		const allCourses = await Course.find(
-			{},
+			{status:"Published"},
 			{
 				courseName: true,
 				price: true,
 				thumbnail: true,
 				instructor: true,
 				ratingAndReviews: true,
-				studentsEnroled: true,
+				studentsEnrolled: true,
 			}
 		)
-			.populate("instructor")
-			.exec();
+		.populate("instructor")
+		.exec();
+		
 		return res.status(200).json({
 			success: true,
 			data: allCourses,
@@ -171,11 +178,12 @@ exports.getCourseDetails = async (req, res) => {
     			path:"additionalDetails",
             }})
             .populate("category")
-            //.populate("ratingAndreviews")
+            .populate("ratingAndReviews")
             .populate({
                 path:"courseContent",
             	populate:{
                     path:"subSection",
+					select:"-videoUrl"
                 },
             })
             .exec();
@@ -405,7 +413,7 @@ exports.getFullCourseDetails = async (req,res) => {
 			
 			let courseProgressCount = await CourseProgress.findOne({
 				courseId: courseId,
-				// userId: userId,
+				userId: userId,
 			})
 
 			console.log("courseProgressCount : ", courseProgressCount)
@@ -440,12 +448,3 @@ exports.getFullCourseDetails = async (req,res) => {
 }
 
 
-// PENDING
-exports.lectureCompletion = async(req,res) => {
-	try{
-
-	}
-	catch(error){
-
-	}
-}

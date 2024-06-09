@@ -35,12 +35,10 @@ const ViewCourse = () => {
   },[])
 
   return (
-    <div>
-
-        <div>
+    <div className='relative flex min-h-[calc(100vh-3.5rem)]'>
+        <div className='h-[calc(100vh-3.5rem)] flex-1 overflow-auto'>
             <VideoDetailsSideBar setReviewModal={setReviewModal}/>
-         <p className='text-black'>viewcourse</p>
-            <div>
+            <div className='mx-6'>
                 <Outlet/>
             </div>
         </div>

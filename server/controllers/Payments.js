@@ -6,6 +6,7 @@ const {courseEnrollmentEmail} = require("../mail/templates/courseEnrollmentEmail
 const { default: mongoose } = require("mongoose");
 const { paymentSuccessEmail } = require("../mail/templates/paymentSuccessEmail");
 const crypto = require("crypto");
+const CourseProgress = require("../models/CourseProgress");
 
 //order creation
 exports.capturePayment = async(req,res) =>{
@@ -134,11 +135,19 @@ const enrollStudents = async(courses, userId, res) =>{
             if(!enrolledCourse)
                 return res.status(500).json({success:false, message: "Course not found"})
             
+            //create courseProgress of the user(Student)
+            const courseProgress = await CourseProgress.create({
+                courseID: courseId,
+                userId: userId,
+                completedVideos: []
+            })
+
             //find the student-> add the course to list of their enrolled courses
             const enrolledStudent = await User.findByIdAndUpdate(
                 {_id:userId},
                 {$push: {
                     courses: courseId,
+                    courseProgress: courseProgress._id
                 }},
                 {new:true},
             )

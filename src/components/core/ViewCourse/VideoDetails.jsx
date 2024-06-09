@@ -7,9 +7,10 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { markLectureAsComplete } from '../../../services/operations/courseDetailsAPI';
 import { updateCompletedLectures } from '../../../slices/viewCourseSlice';
 
-import { Player } from 'video-react'
-import '~video-react/dist/video-react.css';
+import { BigPlayButton, Player } from 'video-react'
+import 'video-react/dist/video-react.css';
 import {AiFillPlayCircle} from "react-icons/ai"
+import IconBtn from '../../common/IconBtn';
 
 const VideoDetails = () => {
 
@@ -17,13 +18,14 @@ const VideoDetails = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const location = useLocation();
-  const playerRef = useRef();
+  const playerRef = useRef(null);
   const {token} = useSelector((state)=>state.auth);
   const {courseSectionData, courseEntireData, completedLectures} = useSelector((state)=>state.viewCourse);
 
   const [videoData, setVideoData] = useState([]);
   const [videoEnded,setVideoEnded] = useState(false);
   const [loading,setLoading] = useState(false);
+  const [previewSource, setPreviewSource] = useState("");
 
   useEffect(()=>{
     const setVideoSpecificDetails = async() => {
@@ -35,11 +37,14 @@ const VideoDetails = () => {
       else{
         const filteredSection = courseSectionData.filter(
           (section)=> section._id === sectionId)
+          // console.log("filteredSection:",filteredSection);
         // Note:filter returns array
-        const filteredVideoData = filteredSection?.[0].filter(
+        const filteredVideoData = filteredSection?.[0].subSection.filter(
           (subSection)=> subSection._id === subSectionId
         )
+        // console.log("filteredVideoData",filteredVideoData)
         setVideoData(filteredVideoData?.[0]);
+        setPreviewSource(courseEntireData.thumbnail)
         setVideoEnded(false);
       }
     }
@@ -121,7 +126,7 @@ const VideoDetails = () => {
     const currentSectionIndex = courseSectionData.findIndex(
       (sec)=>sec._id === sectionId
     )
-    const currentSubSectionIndex = courseSectionData[currentSectionIndex].subSection.findIndex(
+    const currentSubSectionIndex = courseSectionData[currentSectionIndex]?.subSection?.findIndex(
       (subSec)=> subSec._id ===  subSectionId
     )
     
@@ -146,12 +151,14 @@ const VideoDetails = () => {
 
 
   const handleLectureCompletion = async() => {
+    console.log("handleLectureCompletion" )
     //once lecture/subsection is done->create entry in db(courseProgress schema)->also update in UI
     setLoading(true);
+    console.log("loading:",loading)
 
-//PENDING-> course progress
 
     const res = await markLectureAsComplete({courseId:courseId, subSectionId: subSectionId},token);
+    console.log("api call res:",res)
     //update in state
     if(res){
       dispatch(updateCompletedLectures(subSectionId))
@@ -160,17 +167,24 @@ const VideoDetails = () => {
     
   }
 
-  const hanleLectureRewatch = () => {
+  const handleLectureRewatch = () => {
     if(playerRef?.current){
       playerRef.current?.seek(0);
       setVideoEnded(false);
+      
     }
   }
 
   return (
-    <div>
+    <div className='flex flex-col gap-5 text-white'>
     {
-      !videoData ? (<div>No Video File Found</div>)
+      !videoData ? (
+      <img
+        src={previewSource}
+        alt='Preview'
+        className='h-full w-full rounded-md object-cover'
+      />
+        )
       : (
         <Player
           ref={playerRef}
@@ -179,27 +193,34 @@ const VideoDetails = () => {
           onEnded={()=>setVideoEnded(true)}
           src={videoData?.videoUrl}
         >
-          <AiFillPlayCircle/>
+          <BigPlayButton position="center"/>
           {
+            // Renders when video ends
             videoEnded && (
-              <div>
+              <div
+              style={
+                {backgroundImage:
+                "linear-gradient(to top, rgb(0,0,0), rgba(0,0,0.7), rgba(0,0,0.5), rgba(0,0,0.1)"}
+              }
+              className='full absolute inset-0 z-[100] grid h-full place-content-center font-inter'>
                 {
                   !completedLectures.includes(subSectionId) && (
                     <IconBtn 
                       disabled={loading}
-                      onClick = {()=>handleLectureCompletion()}
+                      onclick = {()=>handleLectureCompletion()}
                       text = {!loading ? "Mark as Completed" : "Loading..."}  
+                      customClasses={"text-xl max-w-max px-4 mx-auto"}
                     />
                   )
                 }
                 <IconBtn
                       disabled={loading}
-                      onClick = {()=>hanleLectureRewatch()}
+                      onclick = {()=>handleLectureRewatch()}
                       text = {"Rewatch"}
-                      customClasses  
+                      customClasses="text-xl max-w-max px-4 mx-auto mt-2"  
                 />
 
-                <div>
+                <div className='mt-10 flex min-w-[250px] justify-center gap-x-4 text-xl'>
                   {!isFirstVideo() && (
                     <button
                     disabled={loading}
@@ -229,8 +250,8 @@ const VideoDetails = () => {
       )
     }  
 
-    <h1>{videoData?.title}</h1>
-    <p>{videoData?.description}</p>
+    <h1 className='mt-4 text-3xl font-semibold'>{videoData?.title}</h1>
+    <p className='pt-2 pb-6'>{videoData?.description}</p>
 
     </div>
   )
