@@ -1,6 +1,12 @@
 const Profile = require("../models/Profile");
 const User = require("../models/User");
 const { uploadImageToCloudinary } = require("../utils/imageUploader");
+const {convertSecondsToDuration} = require("../utils/secToDuration")
+const CourseProgress = require("../models/CourseProgress")
+const course = require("../models/Course")
+const mongoose = require("mongoose");
+const Course = require("../models/Course");
+
 // Method for updating a profile
 exports.updateProfile = async (req, res) => {
 	try {
@@ -122,7 +128,7 @@ exports.updateDisplayPicture = async (req, res) => {
 exports.getEnrolledCourses = async (req, res) => {
     try {
       const userId = req.user.id
-      const userDetails = await User.findOne({
+      let userDetails = await User.findOne({
         _id: userId,
       })
         .populate(
@@ -132,10 +138,44 @@ exports.getEnrolledCourses = async (req, res) => {
 				path:"courseContent",
 				populate:{
 					path:"subSection"
-				}
-			}
+				},
+			},
 			})
         .exec()
+		
+		userDetails = userDetails.toObject();
+
+		var subSectionLength = 0;
+		for(var i=0; i< userDetails.courses.length;i++)
+		{
+			let totalDurationInSeconds = 0;
+			subSectionLength = 0;
+
+			for(var j=0; j< userDetails.courses[i].courseContent.length; j++){
+				totalDurationInSeconds += userDetails.courses[i].courseContent[j].subSection.reduce(
+					(acc,curr)=> acc+ parseInt(curr.timeDuration),0)
+				userDetails.courses[i].totalDuration = convertSecondsToDuration(totalDurationInSeconds)
+				subSectionLength += userDetails.courses[i].courseContent[j].subSection.length;
+			}
+
+			let courseProgressCount = await CourseProgress.findOne({
+				courseID: userDetails.courses[i]._id,
+				userId: userId,
+			})
+			
+			courseProgressCount = courseProgressCount?.completedVideos?.length
+			if(subSectionLength === 0){
+				userDetails.courses[i].progressPercentage = 100
+			}
+			else{
+				//to make it upto 2 decimal point
+				const multiplier = Math.pow(10,2);
+				userDetails.courses[i].progressPercentage = Math.round(
+					(courseProgressCount/subSectionLength) * 100 * multiplier
+				)/multiplier
+			}
+		}
+
       if (!userDetails) {
         return res.status(400).json({
           success: false,
@@ -153,3 +193,43 @@ exports.getEnrolledCourses = async (req, res) => {
       })
     }
 };
+
+
+exports.instructorDashboard = async(req,res)=>{
+	try{
+		console.log("Inside instructorDashboard")
+		const courseDetails = await Course.find({instructor:req.user.id})
+		
+		console.log("CourseDetails:",courseDetails)
+		
+		const courseData = courseDetails.map((course)=>{
+			const totalStudentsEnrolled = course.studentsEnrolled.length
+			const totalAmountGenerated = (totalStudentsEnrolled)*(course.price)
+
+			//create new object with additional fields
+			const courseDataWithStats = {
+				_id: course._id,
+				courseName: course.courseName,
+				courseDescription: course.courseDescription,
+				//additional data:
+				totalStudentsEnrolled,
+				totalAmountGenerated,
+			}
+			
+			return courseDataWithStats;
+		})
+
+		
+		return res.status(200).json({
+			success: true,
+			courseDataWithStats: courseData,
+		  })
+	}
+	catch (error) {
+		console.log(error);
+		return res.status(500).json({
+			success: false,
+			message: "Server Error",
+		})
+	  }
+}
